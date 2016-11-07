@@ -2,6 +2,8 @@
 import os
 import subprocess as sub
 from collections import defaultdict
+from pathlib import Path
+
 from pybel import readstring
 
 import requests
@@ -13,8 +15,10 @@ class Ligand(object):
         self.bioactivity = bioactivity
         self.smile = None
         self.mol2 = None
-        self.path_to_mol2 = None
+        self.path_to_dir = None
         self.scaffold = None
+        self.path_to_mol2 = None
+        self.path_to_IC50 = None
 
     def download_smile(self):
         from chembl_webresource_client import CompoundResource
@@ -27,8 +31,14 @@ class Ligand(object):
         self.mol2 = smi
 
     def save_mol2(self, path=None):
-        self.path_to_mol2 = path
+        self.path_to_dir = path
+        self.path_to_mol2 = str(Path(path, self.chembl_id + '.mol2'))
         self.mol2.write('mol2', self.path_to_mol2, True)
+        self.path_to_IC50 = str(Path(path, self.chembl_id + '.ic50'))
+        with open(self.path_to_IC50, 'w') as f:
+            assert self.bioactivity['units'] == 'nM', self.bioactivity['units']
+            f.write(self.bioactivity['value'] + '\n')
+            f.write(self.bioactivity['units'] + '\n')
 
     def make_scaffold(self):
         csv_file = 'output/scaffold.csv'
@@ -38,7 +48,7 @@ class Ligand(object):
         with open(csv_file) as f:
             headers = f.readline().strip().split()[2:]
             values = f.readline().strip().split()[2:]
-            for j in xrange(len(headers)):
+            for j in range(len(headers)):
                 self.scaffold[headers[j]] = values[j]
         os.remove(csv_file)
 
@@ -69,17 +79,17 @@ if __name__ == '__main__':
     for l in ligands:
         l.download_smile()
         l.from_smile_to_mol2()
-        l.save_mol2(str(os.path.join('output', l.chembl_id + '.mol2')))
+        l.save_mol2('output')
         l.make_scaffold()
         result[l.scaffold['RINGS_WITH_LINKERS_1']] += 1
     best = None
-    print 'All scaffolds: '
+    print('All scaffolds: ')
     for k, v in result.items():
-        print '\t', v, '', '', k
+        print('\t', v, '', '', k)
         if not best or best[0] < v:
             best = (v, k)
-    print 'Best scaffold is:', best[1]
+    print('Best scaffold is:', best[1])
     how_may_ligands = 10
-    print 'First', how_may_ligands, 'ligands with best scaffolda:'
+    print('First', how_may_ligands, 'ligands with best scaffolda:')
     for row in download_ligands_with_scaffold(best[1], how_may_ligands):
-        print '\t', row
+        print('\t', row)

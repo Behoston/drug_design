@@ -2,3 +2,6 @@
 .idea/
 .*.sqlite
 output/
+*.bmp
+*.nrg
+*.sph
