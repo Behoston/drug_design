@@ -32,9 +32,9 @@ class Ligand(object):
 
     def save_mol2(self, path=None):
         self.path_to_dir = path
-        self.path_to_mol2 = str(Path(path, self.chembl_id + '.mol2'))
+        self.path_to_mol2 = str(Path(path, 'ligand.mol2'))
         self.mol2.write('mol2', self.path_to_mol2, True)
-        self.path_to_IC50 = str(Path(path, self.chembl_id + '.ic50'))
+        self.path_to_IC50 = str(Path(path, 'ic50'))
         with open(self.path_to_IC50, 'w') as f:
             assert self.bioactivity['units'] == 'nM', self.bioactivity['units']
             f.write(self.bioactivity['value'] + '\n')
@@ -79,7 +79,8 @@ if __name__ == '__main__':
     for l in ligands:
         l.download_smile()
         l.from_smile_to_mol2()
-        l.save_mol2('output')
+        os.mkdir('output/' + l.chembl_id)
+        l.save_mol2('output/' + l.chembl_id)
         l.make_scaffold()
         result[l.scaffold['RINGS_WITH_LINKERS_1']] += 1
     best = None
