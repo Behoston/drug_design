@@ -49,17 +49,12 @@ class Simulation(Process):
                 '-i', os.path.abspath(f.name),
                 '-o', os.path.abspath('dock.out')
             ])
-            subprocess.run(command, shell=True)
+            subprocess.call(command, shell=True)
             self.output.put(ligand_dir)
 
 
-def list_dirs(directory: str) -> list:
-    return [i.name for i in os.scandir(directory) if i.is_dir]
-    # files = []
-    # for item in os.scandir(directory):
-    #     if item.is_dir():
-    #         files.append(item.path)
-    # return files
+def list_dirs(d: str) -> list:
+    return [os.path.join(d, o) for o in os.listdir(d) if os.path.isdir(os.path.join(d, o))]
 
 
 def prepare_queue(directory):
@@ -67,17 +62,9 @@ def prepare_queue(directory):
     output = Queue()
     number_of_ligands = 0
     for file in list_dirs(directory):
-        ligands.put(os.path.abspath(str(Path(directory, file))))
+        ligands.put(os.path.abspath(file))
         number_of_ligands += 1
     return ligands, output, number_of_ligands
-
-
-def parse_output(output):
-    with open(output) as f:
-        for line in f:
-            l = line.strip().split()
-            if len(l) == 3 and l[0] == 'Grid' and l[1] == 'Score:':
-                return float(l[2])
 
 
 if __name__ == '__main__':
@@ -96,15 +83,13 @@ if __name__ == '__main__':
         ligands.put(None)
         proc.append(Simulation(ligands, output, config_template, dock_bin, spheres_file, grid_prefix))
         proc[-1].start()
+
     results = []
     for i in range(number_of_ligands):
         results.append(output.get())
-        with Path(results[-1], 'ic50').open() as f:
-            ic50 = int(f.readline().strip())
-        print(ic50, ':', parse_output(str(Path(results[-1], 'dock.out'))))
 
     # end
-    ligands.close()
-    output.close()
     for p in proc:
         p.join()
+    output.close()
+    ligands.close()
