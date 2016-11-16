@@ -54,18 +54,46 @@ class FitDocking(Process):
 def prepare_params() -> (Queue, int):
     q = Queue()
     q_size = 0
-    for max_orientations in range(1000, 11000, 1000):
-        for min_anchor_size in (6, 12, 24):
-            for use_clash_overlap in (0, 5):
-                for atom_model in ('all', 'united'):
-                    params = {
-                        'max_orientations': max_orientations,
-                        'min_anchor_size': min_anchor_size,
-                        'use_clash_overlap': use_clash_overlap,
-                        'atom_model': atom_model,
-                    }
-                    q.put(params)
-                    q_size += 1
+    max_orientations_default = 1000
+    min_anchor_size_default = 5
+    use_clash_overlap_default = 'no'
+    atom_model_default = 'all'
+    for max_orientations in range(2000, 11000, 1000):
+        params = {
+            'max_orientations': max_orientations,
+            'min_anchor_size': min_anchor_size_default,
+            'use_clash_overlap': use_clash_overlap_default,
+            'atom_model': atom_model_default,
+        }
+        q.put(params)
+        q_size += 1
+    for min_anchor_size in (6, 12, 24):
+        params = {
+            'max_orientations': max_orientations_default,
+            'min_anchor_size': min_anchor_size,
+            'use_clash_overlap': use_clash_overlap_default,
+            'atom_model': atom_model_default,
+        }
+        q.put(params)
+        q_size += 1
+    for use_clash_overlap in [5]:
+        params = {
+            'max_orientations': max_orientations_default,
+            'min_anchor_size': min_anchor_size_default,
+            'use_clash_overlap': use_clash_overlap,
+            'atom_model': atom_model_default,
+        }
+        q.put(params)
+        q_size += 1
+    for atom_model in ['united']:
+        params = {
+            'max_orientations': max_orientations_default,
+            'min_anchor_size': min_anchor_size_default,
+            'use_clash_overlap': use_clash_overlap_default,
+            'atom_model': atom_model,
+        }
+        q.put(params)
+        q_size += 1
     return q, q_size
 
 
